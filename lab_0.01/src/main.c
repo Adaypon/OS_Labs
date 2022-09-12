@@ -2,7 +2,7 @@
 #include <stdlib.h>
 
 int main(int argc, char** argv) {
-	FILE* fd;
+	FILE* fd = NULL;
 	char c;
 
 	// arguments starts at argv[1]
