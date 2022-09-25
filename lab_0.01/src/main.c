@@ -1,8 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <errno.h>
+#include <string.h>
 
 int main(int argc, char** argv) {
-	FILE* fd;
+	FILE* fd = NULL;
 	char c;
 
 	// arguments starts at argv[1]
@@ -13,8 +15,9 @@ int main(int argc, char** argv) {
 			}
 
 			if ((fd = fopen(argv[i], "r")) == NULL) {
-				printf("Can't open file: %s\n", argv[i]);
-				exit(1);
+				int error = errno;
+				fprintf(stderr, "Error (%d): %s: %s\n", error, argv[i], strerror(errno));
+				continue;
 			}
 		}
 		else {
