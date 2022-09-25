@@ -3,30 +3,31 @@
 #include <string.h>
 #include <errno.h>
 
-// TODO reading from pipeline
+
+void grep(FILE* inputStream, const char* substr) {
+	char buffer[2048];
+	while (!feof(inputStream)) {
+		while (fgets(buffer, sizeof(buffer), inputStream) != NULL) {
+			if (strstr(buffer, substr) != NULL) {
+				fprintf(stdout, "%s", buffer);
+			}
+		}
+	}
+}
 
 int main(int argc, char** argv) {
-	char c;
-
 	if (argc > 1) {
-		FILE* open_file = NULL;
-		c = getopt(argc, argv, "f:");
-		
-		if (c == -1) {
-			fprintf(stderr, "Error, no option\n");
-			return 3;
-		}
-		
+		FILE* openFile = NULL;
+		char c = getopt(argc, argv, "f:");
 		switch (c) {
+			case -1:
+				grep(stdin, argv[1]);
+				break;
+			
 			case 'f':
-				if ((open_file = fopen(optarg, "r")) != NULL) {
-					char buffer[2048];
-					while (fgets(buffer, sizeof(buffer), open_file) != NULL) {
-						if (strstr(buffer, argv[1]) != NULL) {
-							fprintf(stdout, "%s", buffer);
-						}
-					}
-					fclose(open_file);
+				if ((openFile = fopen(optarg, "r")) != NULL) {
+					grep(openFile, argv[1]);
+					fclose(openFile);
 				}
 				else {
 					int error = errno;
