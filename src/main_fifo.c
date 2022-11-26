@@ -32,7 +32,7 @@ int main(int argc, char** argv) {
 		sprintf(str, "[PARENT] {%2d:%2d:%.3lf} pid = %d", curr->tm_hour, curr->tm_min, sec_ns, getpid());
 		
 		fd = open("./fifo_file", O_WRONLY);
-		write(fd, (void*) str, sizeof(str) + 1);
+		write(fd, (void*) str, sizeof(str));
 		close(fd);
 		unlink("./fifo_file");
 	}
