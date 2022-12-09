@@ -40,6 +40,7 @@ int main(int argc, char** argv) {
 		double sec_ns = (double)curr->tm_sec + ((double)ts.tv_nsec / 1000000000.);
 		sprintf(str, "{%2d:%2d:%.3lf} pid = %d", curr->tm_hour, curr->tm_min, sec_ns, getpid());
 		strcpy(shm_ptr, str);
+		sleep(5);
 	}
 	
 	
