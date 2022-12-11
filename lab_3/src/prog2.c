@@ -19,6 +19,12 @@ int main(int argc, char** argv) {
 	(void)argv;
 
 	struct timespec ts;
+	struct stat buffer;
+
+	if (stat(SHM_NAME, &buffer) != 0) {
+		fprintf(stderr, "Cannot find shared memory file. Please run prog1 executable file first.\n");
+		exit(1);
+	}
 		
 	key_t shm_key = ftok(SHM_NAME, 1);
 	int shmid = shmget(shm_key, SHM_SIZE, IPC_CREAT | 0666);

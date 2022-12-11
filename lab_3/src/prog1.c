@@ -13,17 +13,29 @@
 #define SHM_NAME "shmem_file"
 #define SHM_SIZE 64
 
-// TODO if there is already a process with this program
-// exit with error message
 
 int main(int argc, char** argv) {
 	(void)argc;
 	(void)argv;
 
 	struct timespec ts;
+	struct stat buffer;
+	FILE* file;
 	
+	if (stat(SHM_NAME, &buffer) != 0) {
+		if (!(file = fopen(SHM_NAME, "w"))) {
+			fprintf(stderr, "Shared memory file cannot be created: %s(%d)\n", strerror(errno), errno);
+			exit(1);
+		}
+		fclose(file);
+	}
+
 	key_t shm_key = ftok(SHM_NAME, 1);
-	int shmid = shmget(shm_key, SHM_SIZE, IPC_CREAT | 0666);
+	int shmid = shmget(shm_key, SHM_SIZE, IPC_CREAT | IPC_EXCL | 0666);
+	if (shmid == -1 && errno == EEXIST) {
+		fprintf(stderr, "The program is already running: %s(%d)", strerror(errno), errno);
+		exit(1);
+	}
 	if (shmid == -1) {
 		fprintf(stderr, "%s(%d)\n", strerror(errno), errno);
 		exit(1);
