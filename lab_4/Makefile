@@ -12,7 +12,7 @@ OBJ_DIR = obj
 SOURCES = prog1.c prog2.c
 OBJECTS = $(SOURCES:.c=.o)
 
-build: prog1 prog2 shmem
+build: prog1 prog2
 
 prog1: prog1.o
 	[ -d $(BUILD_DIR) ] || mkdir -p $(BUILD_DIR)
@@ -29,9 +29,6 @@ prog1.o: $(SOURCE_DIR)/prog1.c
 prog2.o: $(SOURCE_DIR)/prog2.c
 	[ -d $(OBJ_DIR) ] || mkdir -p $(OBJ_DIR)
 	$(CC) -c $< -o $(OBJ_DIR)/$@ $(CFLAGS)
-
-shmem:
-	touch $(BUILD_DIR)/shmem_file
 
 clean:
 	rm -rf $(BUILD_DIR)

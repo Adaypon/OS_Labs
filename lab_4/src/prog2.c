@@ -21,6 +21,12 @@ int main(int argc, char** argv) {
 
 	struct timespec ts;
 	struct sembuf sops;
+	struct stat buffer;
+
+	if (stat(SHM_NAME, &buffer) != 0) {
+		fprintf(stderr, "Cannot find shared memory file. Please run prog1 executable file first.\n");
+		exit(1);
+	}
 		
 	key_t key = ftok(SHM_NAME, 1);
 
