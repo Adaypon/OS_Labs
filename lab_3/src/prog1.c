@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -14,14 +15,10 @@
 #define SHM_NAME "shmem_file"
 #define SHM_SIZE 64
 
-int g_shmid = 0;
+bool g_exitFlag = false;
 
 void signalHandler() {
-	if (g_shmid) {
-		printf("Destroying shared memory segment\n");
-		shmctl(g_shmid, IPC_RMID, NULL);
-	}
-	exit(0);
+	g_exitFlag = true;
 }
 
 int main(int argc, char** argv) {
@@ -44,21 +41,21 @@ int main(int argc, char** argv) {
 	}
 
 	key_t shm_key = ftok(SHM_NAME, 1);
-	g_shmid = shmget(shm_key, SHM_SIZE, IPC_CREAT | IPC_EXCL | 0666);
-	if (g_shmid == -1 && errno == EEXIST) {
+	int shmid = shmget(shm_key, SHM_SIZE, IPC_CREAT | IPC_EXCL | 0666);
+	if (shmid == -1 && errno == EEXIST) {
 		fprintf(stderr, "The program is already running: %s(%d)", strerror(errno), errno);
 		exit(1);
 	}
-	if (g_shmid == -1) {
+	if (shmid == -1) {
 		fprintf(stderr, "%s(%d)\n", strerror(errno), errno);
 		exit(1);
 	}
-	printf("[first] key: %d\n[first] mem_id: %d\n", shm_key, g_shmid);
+	printf("[first] key: %d\n[first] mem_id: %d\n", shm_key, shmid);
 
-	char* shm_ptr = shmat(g_shmid, NULL, 0);
+	char* shm_ptr = shmat(shmid, NULL, 0);
 	printf("[first] shm_ptr: %p\n", shm_ptr);
 
-	while(1) {
+	while(!g_exitFlag) {
 		char str[64];
 		clock_gettime(CLOCK_REALTIME, &ts);
 		struct tm* curr = localtime(&ts.tv_sec);
@@ -67,7 +64,12 @@ int main(int argc, char** argv) {
 		strcpy(shm_ptr, str);
 		sleep(5);
 	}
-	
+
+	shmdt(shm_ptr);
+	shmctl(shmid, IPC_RMID, NULL);
+
+	printf("[first] Destroying the shared memory segment\n");
+	remove(SHM_NAME);
 	
 	return 0;
 }
