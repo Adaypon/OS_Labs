@@ -30,7 +30,7 @@ int main(int argc, char** argv) {
 	signal(SIGTERM, signalHandler);
 
 	struct timespec ts;
-	struct sembuf sops;
+	struct sembuf setSem = {0, 1, 0};
 	struct stat buffer;
 	FILE* file;
 
@@ -66,9 +66,7 @@ int main(int argc, char** argv) {
 	printf("[first] shm_ptr: %p\n", shm_ptr);
 
 	semctl(semid, 0, SETVAL, (int)0); // init semaphore value with 0
-	sops.sem_num = 0;
-	sops.sem_flg = 0;
-
+	
 	while(!g_exitFlag) {
 		char str[64];
 		clock_gettime(CLOCK_REALTIME, &ts);
@@ -81,22 +79,24 @@ int main(int argc, char** argv) {
 			so we can access shared memory
 		*/
 		strcpy(shm_ptr, str);
-		sleep(5);
+		// sleep(5);
 		
 		/*
 			allowing prog2 process to access critical section
-			by setting sem_op = 2
+			by setting sem_op = 1
 		*/
-		sops.sem_op = 2;
-		semop(semid, &sops, 1);
+		int res = semop(semid, &setSem, 1);
+		if (res == -1) {
+			int err = errno;
+			printf("[first] semop: %s(%d)\n", strerror(err), err);
+		}
+		sleep(1);
 
 		/* 
 			waiting for semaphore to be opened 
 			(when semaphore value will be reset to 0) 
 			for prog1 process for next iteration
 		*/
-		sops.sem_op = 0;
-		semop(semid, &sops, 1);
 	}
 
 	shmdt(shm_ptr);

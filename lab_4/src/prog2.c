@@ -20,7 +20,7 @@ int main(int argc, char** argv) {
 	(void)argv;
 
 	struct timespec ts;
-	struct sembuf sops;
+	struct sembuf unsetSem = {0, -1, 0};
 	struct stat buffer;
 
 	if (stat(SHM_NAME, &buffer) != 0) {
@@ -45,19 +45,15 @@ int main(int argc, char** argv) {
 
 	char* shm_ptr = shmat(shmid, NULL, SHM_RDONLY);
 	printf("[second] shm_ptr: %p\n", shm_ptr);
-	sops.sem_num = 0;
-	sops.sem_flg = 0;
 
 	printf("[second] Waiting...\n");
-	sops.sem_op = -1;
-	semop(semid, &sops, 1);
+	
 	/*
 		initially, semaphore value is 0,
-		so the prog2 process is blocked for now (0 + (-1) = -1 < 0)
+		so the prog2 process is blocked
 
-		at the moment when sem_op is 2 in prog1, semaphore value += 2, so 0 + 2 = 2 >= 0
-		
-		checking sum: 2 + (-1) = 1 >= 0, unlock prog2 process, set semaphore value = 1
+		at the moment when sem_op is 1 in prog1,
+		unlock prog2 process
 	*/
 
 	clock_gettime(CLOCK_REALTIME, &ts);
@@ -66,11 +62,17 @@ int main(int argc, char** argv) {
 	printf("{%2d:%2d:%.3lf} pid = %d reading shmem: %s\n", curr->tm_hour, curr->tm_min, sec_ns, getpid(), shm_ptr);
 		
 	shmdt(shm_ptr);
-	sops.sem_op = -1;
-	semop(semid, &sops, 1);
+	
+	int res = semop(semid, &unsetSem, 1);
+	if (res == -1) {
+		int err = errno;
+		printf("[second] semop: %s(%d)\n", strerror(err), err);
+	}
+	else {
+		printf("[second] unset semaphore\n");
+	}
 	/*
-		semaphore value += (-1), so 1 - 1 = 0
-		and prog1 process can be unlocked now 
+		prog1 process can be unlocked now 
 	*/
 
 	return 0;
