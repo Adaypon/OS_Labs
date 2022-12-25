@@ -7,8 +7,6 @@
 pthread_mutex_t g_mtx;
 pthread_cond_t g_cond = PTHREAD_COND_INITIALIZER;
 
-// FIXME readers cond_wait loop when trying read array second time
-
 char arrCounter[] = {'0', '\0'};
 
 void* writer(void* args) {
@@ -20,7 +18,6 @@ void* writer(void* args) {
 
 		printf("[writer] writing to array...\n");
 		arrCounter[0] += 1;
-		sleep(1);
 		
 		pthread_cond_broadcast(&g_cond);
 		pthread_mutex_unlock(&g_mtx);
@@ -42,12 +39,9 @@ void* reader(void* args) {
 		pthread_cond_wait(&g_cond, &g_mtx);
 
 		printf("[reader] %lx reading array: %s\n", pthread_self(), arrCounter);
-		sleep(1);
-		
-		
+				
 		pthread_mutex_unlock(&g_mtx);
 		printf("[reader] %lx Mutex unlocked\n", pthread_self());
-		sleep(5);
 	}
 
 	pthread_exit(0);
@@ -61,7 +55,6 @@ int main(int argc, char** argv) {
 	int threadsCount = 11;
 
 	pthread_t threads[threadsCount];
-	// pthread_create(&threads[0], NULL, writer, NULL);
 	for (int i = 0; i < threadsCount - 1; ++i) {
 		pthread_create(&threads[i], NULL, reader, NULL);
 	}
